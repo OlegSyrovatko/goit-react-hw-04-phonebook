@@ -1,6 +1,4 @@
-import React from 'react';
-// import { useState, useEffect } from 'react';
-import { useState } from 'react';
+import { React, useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import Modal from 'components/Modal';
 import ContactList from 'components/ContactList';
@@ -14,13 +12,21 @@ import {
   ModalItems,
 } from './App.styled';
 
-export const App = () => {
-  const [contacts, setContacts] = useState([
+let localContacts = localStorage.getItem('contacts');
+localContacts = JSON.parse(localContacts);
+
+if (!localContacts) {
+  localContacts = [
     { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
     { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
     { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
     { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-  ]);
+  ];
+  localStorage.setItem('contacts', JSON.stringify(localContacts));
+}
+
+export const App = () => {
+  const [contacts, setContacts] = useState(localContacts);
   const [filter, setFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
 
@@ -28,32 +34,19 @@ export const App = () => {
     setShowModal(!showModal);
   };
 
-  // componentDidMount() {
-  //   const contacts = localStorage.getItem('contacts');
-  //   const parsedContacts = JSON.parse(contacts);
-
-  //   if (parsedContacts) {
-  //     this.setState({ contacts: parsedContacts });
-  //   } else {
-
-  //     localStorage.setItem('contacts', JSON.stringify(defaultContacts));
-  //     this.setState({ contacts: defaultContacts });
-  //   }
-  // }
-  // componentDidUpdate(prevState) {
-  //   if (this.state.contacts !== prevState.contacts) {
-  //     localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-  //   }
-  // }
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
   const addContact = ({ name, number }) => {
-    const isNameExists = contacts.some(contact => contact.name === name);
+    const isNameExists = contacts.some(
+      contact => contact.name?.toLowerCase() === name.toLowerCase()
+    );
+
     if (isNameExists) {
       return alert(`${name} is already in contacts`);
     }
-
     setContacts([...contacts, { id: nanoid(), name, number }]);
-
     toggleModal();
   };
 
@@ -67,11 +60,9 @@ export const App = () => {
       contact.name.toLowerCase().includes(lowerFilter)
     );
   };
-  // onDeleteContact = id => {
-  //   this.setState({
-  //     contacts: this.state.contacts.filter(contact => contact.id !== id),
-  //   });
-  // };
+  const onDeleteContact = id => {
+    setContacts(contacts.filter(contact => contact.id !== id));
+  };
 
   const visibleContacts = filterContacts();
 
@@ -102,7 +93,7 @@ export const App = () => {
       )}
       <ContactList
         contacts={visibleContacts}
-        // onDeleteContact={this.onDeleteContact}
+        onDeleteContact={onDeleteContact}
       />
     </Book>
   );
